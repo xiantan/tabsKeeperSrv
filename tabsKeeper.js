@@ -7,7 +7,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var app=express();
 
-var userId= {};
+var userSave= {};
 var usePort = 3009;
 
 /*var server = http.createServer(function(request, response) {
@@ -20,35 +20,66 @@ var usePort = 3009;
 });*/
 var server = http.createServer(app);
 app.use(bodyParser.json());
-app.post('/tabs/',function(request, response){
-				console.log((new Date()) + 'normal http request' + request.url);
-				/*console.log(request.ip+"///"+JSON.stringify(request.body));
-				console.log(request.ip+"///"+request.body);
-				console.log(request.ip+"///"+request.data);
-				response.writeHead(200);
-				//    response.write(util.inspect(request));
-				//response.write(request.body[0].title);
-				//    response.write(util.inspect(url.parse(request.url,true).query));
-				response.end();*/
+app.post('/tabs/save/',function(request, response){
 				var body = '';
 				request.on('data', function (data) {
 						body += data;
 
-						// Too much POST data, kill the connection!
-						if (body.length > 1e6)
-						request.connection.destroy();
+						if (body.length > 1e6){//prevent too big
+								request.connection.destroy();
+						}
 						});
 				request.on('end', function () {
 						var jsonData = JSON.parse(body);
-						//console.log("??"+body+"!!");
-						for(var i in jsonData){
-								console.log(jsonData[i].title);
+						//console.log("??"+body+"!!");return;
+						for(var i=0;i<jsonData.urls.length;i++){
+								if(jsonData.urls){
+										try{
+												console.log(jsonData.urls[i].title);
+										}catch(e){
+												console.log("wrong at save loop:"+i);
+										console.log(JSON.stringify(body));
+												break;
+										}
+								}
+								else{
+										console.log(JSON.stringify(body));
+								}
 						}
-
-						// use post['blah'], etc.
-				                		                                });
+						userSave[jsonData.userIdentify] = jsonData;
+				console.log((new Date()) + 'normal save request' + request.url+"[user]:"+jsonData.userIdentify);
+				response.writeHead(200);
+				response.write(jsonData.userIdentify+" save success!");
+				//response.write(util.inspect(url.parse(request.url,true).query));
+				response.end();
 				});
-
+});
+app.get('/tabs/get/',function(request, response){
+				queryData=url.parse(request.url,true).query;
+				var body = '';
+				request.on('data', function (data) {
+						body += data;
+						if (body.length > 1e6){//prevent too big
+								request.connection.destroy();
+						}
+						});
+				request.on('end', function () {
+						});
+				console.log((new Date()) + 'normal get request' + request.url+"[user]:"+queryData.uid);
+				response.writeHead(200);
+				if(userSave.hasOwnProperty(queryData.uid)){
+						response.write(queryData.uid+"get:");
+						for(var i=0;i<userSave[queryData.uid].urls.length;i++){
+								response.write(userSave[queryData.uid].urls[i].title+"@@@");
+								response.write(userSave[queryData.uid].urls[i].url+"<br/>");
+						}
+						
+				}else{
+						response.write("no user:"+queryData.uid);
+				}
+				//response.write(util.inspect());
+				response.end();
+});
 server.listen(usePort, function() {
 		    console.log((new Date()) + 'run on port:' + usePort);
 });
