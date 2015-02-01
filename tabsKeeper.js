@@ -19,6 +19,7 @@ var usePort = 3009;
 		            response.end();
 });*/
 var server = http.createServer(app);
+app.set('jsonp callback name');
 app.use(bodyParser.json());
 app.post('/tabs/save/',function(request, response){
 				var body = '';
@@ -30,9 +31,15 @@ app.post('/tabs/save/',function(request, response){
 						}
 						});
 				request.on('end', function () {
-						var jsonData = JSON.parse(body);
+						var jsonData;
+						try{
+								jsonData = JSON.parse(body);
+						}
+						catch(e){
+								console.log("json parse fail,user is "+request.url);
+						}
 						//console.log("??"+body+"!!");return;
-						for(var i=0;i<jsonData.urls.length;i++){
+						/*for(var i=0;i<jsonData.urls.length;i++){
 								if(jsonData.urls){
 										try{
 												console.log(jsonData.urls[i].title);
@@ -45,7 +52,7 @@ app.post('/tabs/save/',function(request, response){
 								else{
 										console.log(JSON.stringify(body));
 								}
-						}
+						}*/
 						userSave[jsonData.userIdentify] = jsonData;
 				console.log((new Date()) + 'normal save request' + request.url+"[user]:"+jsonData.userIdentify);
 				response.writeHead(200);
@@ -66,15 +73,20 @@ app.get('/tabs/get/',function(request, response){
 				request.on('end', function () {
 						});
 				console.log((new Date()) + 'normal get request' + request.url+"[user]:"+queryData.uid);
-				response.writeHead(200);
 				if(userSave.hasOwnProperty(queryData.uid)){
-						response.write(queryData.uid+"get:");
+						/*response.write(queryData.uid+"get:");
 						for(var i=0;i<userSave[queryData.uid].urls.length;i++){
 								response.write(userSave[queryData.uid].urls[i].title+"@@@");
 								response.write(userSave[queryData.uid].urls[i].url+"<br/>");
-						}
+								response.write("\nlo::"+userSave[queryData.uid].urls[i].scrollLocation+"\n");
+						}*/
+						//response.setHeader('Content-Type', 'application/json');
+						//response.writeHead(200);
+						//response.write(JSON.stringify(userSave[queryData.uid]));
+						response.jsonp(userSave[queryData.uid]);
 						
 				}else{
+						response.writeHead(200);
 						response.write("no user:"+queryData.uid);
 				}
 				//response.write(util.inspect());
